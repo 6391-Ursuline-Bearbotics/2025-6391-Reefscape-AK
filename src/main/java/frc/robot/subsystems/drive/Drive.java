@@ -68,6 +68,16 @@ public class Drive extends SubsystemBase {
               Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
               Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
 
+  // Turtle Speed Constants
+  private boolean turtleMode = false;
+  private final double TurtleSpeed = 0.1; // Reduction in speed from Max Speed, 0.1 = 10%
+  private final double MaxAngularRate =
+      Math.PI * 1.5; // .75 rotation per second max angular velocity.  Adjust for max turning rate
+  // speed.
+  private final double TurtleAngularRate =
+      Math.PI * 0.5; // .25 rotation per second max angular velocity.  Adjust for max turning rate
+  // speed.
+
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = 74.088;
   private static final double ROBOT_MOI = 6.883;
@@ -333,8 +343,9 @@ public class Drive extends SubsystemBase {
   }
 
   /** Resets the current odometry pose. */
-  public void setPose(Pose2d pose) {
-    poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+  public Command setPose(Pose2d pose) {
+    return runOnce(() -> poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose))
+        .ignoringDisable(true);
   }
 
   /** Adds a new timestamped vision measurement. */
@@ -348,12 +359,22 @@ public class Drive extends SubsystemBase {
 
   /** Returns the maximum linear speed in meters per sec. */
   public double getMaxLinearSpeedMetersPerSec() {
-    return TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    return turtleMode ? TurtleSpeed : TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
   }
 
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
-    return getMaxLinearSpeedMetersPerSec() / DRIVE_BASE_RADIUS;
+    return turtleMode ? TurtleAngularRate : MaxAngularRate;
+  }
+
+  /** Sets the current value of turtleMode */
+  public void setTurtleMode(boolean mode) {
+    turtleMode = mode;
+  }
+
+  /** Sets the current value of turtleMode */
+  public Command toggleTurtleMode() {
+    return runOnce(() -> turtleMode = !turtleMode);
   }
 
   /** Returns an array of module translations. */
