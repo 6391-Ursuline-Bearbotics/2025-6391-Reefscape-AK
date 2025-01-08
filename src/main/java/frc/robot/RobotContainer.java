@@ -16,8 +16,14 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -48,6 +54,26 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  private Mechanism2d mechanisms = new Mechanism2d(5, 3);
+  private MechanismRoot2d root = mechanisms.getRoot("root", 2.5, 0.25);
+
+  @SuppressWarnings("unused")
+  private MechanismLigament2d fromRobot = root
+          .append(new MechanismLigament2d("fromRobot", Units.inchesToMeters(5.5), 180, 0,
+                  new Color8Bit(Color.kWhite)));
+  @SuppressWarnings("unused")
+  private MechanismLigament2d elevatorBase = root
+          .append(new MechanismLigament2d("elevatorBase", Units.inchesToMeters(36), 90, 2,
+                  new Color8Bit(Color.kWhite)));
+  private MechanismLigament2d elevatorLigament = root
+          .append(new MechanismLigament2d("elevatorStage", Units.inchesToMeters(10), 90,
+                  4,
+                  new Color8Bit(Color.kOrange)));
+  private MechanismLigament2d armLigament = elevatorLigament
+          .append(new MechanismLigament2d("armLigament", Units.inchesToMeters(10), 270,
+                  5,
+                  new Color8Bit(Color.kRed)));
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
