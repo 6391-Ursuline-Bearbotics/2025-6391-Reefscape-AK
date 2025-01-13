@@ -13,6 +13,8 @@
 
 package frc.robot;
 
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -33,9 +35,22 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOLimelight;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+
+import org.ironmaple.simulation.SimulatedArena;
+import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -47,6 +62,10 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Vision vision;
+  private final Elevator elevator;
+
+  private SwerveDriveSimulation driveSimulation = null;
 
   // Controller
   private final CommandXboxController drv = new CommandXboxController(0);
@@ -91,17 +110,31 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.FrontRight),
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
+                new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
+        elevator = new Elevator(new ElevatorIOTalonFX());
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
         drive =
             new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
+                new GyroIOSim(driveSimulation.getGyroSimulation()),
+                new ModuleIOSim(driveSimulation.getModules()[0]),
+                new ModuleIOSim(driveSimulation.getModules()[0]),
+                new ModuleIOSim(driveSimulation.getModules()[0]),
+                new ModuleIOSim(driveSimulation.getModules()[0]));
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVisionSim(
+                    camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
+                new VisionIOPhotonVisionSim(
+                    camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
+        elevator = new Elevator(new ElevatorIOTalonFXSim());
         break;
 
       default:
@@ -113,6 +146,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+        elevator = new Elevator(new ElevatorIO() {});
         break;
     }
 
@@ -175,5 +210,22 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return autoChooser.get();
+  }
+
+  public void resetSimulationField() {
+    if (Constants.currentMode != Constants.Mode.SIM) return;
+
+    driveSimulation.setSimulationWorldPose(new Pose2d(3, 3, new Rotation2d()));
+    SimulatedArena.getInstance().resetFieldForAuto();
+  }
+
+  public void displaySimFieldToAdvantageScope() {
+    if (Constants.currentMode != Constants.Mode.SIM) return;
+
+    Logger.recordOutput("FieldSimulation/RobotPosition", driveSimulation.getSimulatedDriveTrainPose());
+    Logger.recordOutput(
+            "FieldSimulation/Coral", SimulatedArena.getInstance().getGamePiecesArrayByType("Coral"));
+    Logger.recordOutput(
+            "FieldSimulation/Algae", SimulatedArena.getInstance().getGamePiecesArrayByType("Algae"));
   }
 }
