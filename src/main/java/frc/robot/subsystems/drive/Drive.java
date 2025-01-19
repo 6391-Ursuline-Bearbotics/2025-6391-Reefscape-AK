@@ -52,6 +52,9 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
+import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -73,10 +76,8 @@ public class Drive extends SubsystemBase {
   private final double TurtleSpeed = 0.1; // Reduction in speed from Max Speed, 0.1 = 10%
   private final double MaxAngularRate =
       Math.PI * 1.5; // .75 rotation per second max angular velocity.  Adjust for max turning rate
-  // speed.
   private final double TurtleAngularRate =
       Math.PI * 0.5; // .25 rotation per second max angular velocity.  Adjust for max turning rate
-  // speed.
 
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = 74.088;
@@ -95,6 +96,23 @@ public class Drive extends SubsystemBase {
               TunerConstants.FrontLeft.SlipCurrent,
               1),
           getModuleTranslations());
+
+  public static final DriveTrainSimulationConfig mapleSimConfig =
+      DriveTrainSimulationConfig.Default()
+          .withRobotMass(Kilograms.of(ROBOT_MASS_KG))
+          .withCustomModuleTranslations(getModuleTranslations())
+          .withGyro(COTS.ofPigeon2())
+          .withSwerveModule(
+              new SwerveModuleSimulationConfig(
+                  DCMotor.getKrakenX60(1),
+                  DCMotor.getFalcon500(1),
+                  TunerConstants.FrontLeft.DriveMotorGearRatio,
+                  TunerConstants.FrontLeft.SteerMotorGearRatio,
+                  Volts.of(TunerConstants.FrontLeft.DriveFrictionVoltage),
+                  Volts.of(TunerConstants.FrontLeft.SteerFrictionVoltage),
+                  Meters.of(TunerConstants.FrontLeft.WheelRadius),
+                  KilogramSquareMeters.of(TunerConstants.FrontLeft.SteerInertia),
+                  WHEEL_COF));
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;

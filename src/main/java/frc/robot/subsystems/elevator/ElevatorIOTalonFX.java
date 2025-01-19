@@ -20,18 +20,18 @@ import edu.wpi.first.units.measure.Voltage;
  * This Elevator implementation is for a Talon FX driving a motor like the Falon 500 or Kraken X60.
  */
 public class ElevatorIOTalonFX implements ElevatorIO {
-  private final TalonFX elevator = new TalonFX(elevatorCanId);
-  private final StatusSignal<Angle> positionRot = elevator.getPosition();
-  private final StatusSignal<AngularVelocity> velocityRotPerSec = elevator.getVelocity();
-  private final StatusSignal<Voltage> appliedVolts = elevator.getMotorVoltage();
-  private final StatusSignal<Current> currentAmps = elevator.getSupplyCurrent();
+  protected final TalonFX elevator = new TalonFX(ELEVATORCANID);
+  protected final StatusSignal<Angle> positionRot = elevator.getPosition();
+  protected final StatusSignal<AngularVelocity> velocityRotPerSec = elevator.getVelocity();
+  protected final StatusSignal<Voltage> appliedVolts = elevator.getMotorVoltage();
+  protected final StatusSignal<Current> currentAmps = elevator.getSupplyCurrent();
 
-  private final VoltageOut voltageRequest = new VoltageOut(0.0);
-  private final MotionMagicVoltage motionMagic = new MotionMagicVoltage(0);
+  protected final VoltageOut voltageRequest = new VoltageOut(0.0);
+  protected final MotionMagicVoltage motionMagic = new MotionMagicVoltage(0);
 
   public ElevatorIOTalonFX() {
     var config = new TalonFXConfiguration();
-    config.CurrentLimits.SupplyCurrentLimit = currentLimit;
+    config.CurrentLimits.SupplyCurrentLimit = CURRENTLIMIT;
     config.CurrentLimits.SupplyCurrentLimitEnable = true;
     config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 

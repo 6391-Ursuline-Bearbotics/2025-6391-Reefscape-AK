@@ -1,8 +1,13 @@
 package frc.robot.subsystems.elevator;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.function.DoubleSupplier;
+
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends SubsystemBase {
@@ -27,5 +32,28 @@ public class Elevator extends SubsystemBase {
     return runEnd(
         () -> io.setVoltage((up.getAsDouble() - down.getAsDouble()) * 12.0),
         () -> io.setVoltage(0.0));
+  }
+
+  public double getPosition() {
+    return inputs.positionRad;
+  }
+
+  @AutoLogOutput(key = "Mech2D")
+  public Pose3d getPose() {
+    return new Pose3d(0.14, 0, 0.13, new Rotation3d());
+  }
+
+  @AutoLogOutput(key = "Mech2D")
+  public Pose3d getStageComponentPose() {
+      Transform3d transform = new Transform3d();
+      if (getPosition() > 0.706) {
+          transform = new Transform3d(0, 0, getPosition() - 0.706, new Rotation3d());
+      }
+      return new Pose3d(0.14, 0, 0.169, new Rotation3d()).plus(transform);
+  }
+
+  @AutoLogOutput(key = "Mech2D")
+  public Pose3d getCarriageComponentPose() {
+      return new Pose3d(0.14, 0, 0.247 + getPosition(), new Rotation3d());
   }
 }
