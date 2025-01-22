@@ -48,9 +48,9 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
   // Slew Rate Limiters to limit acceleration of joystick inputs
-  private static final SlewRateLimiter xLimiter = new SlewRateLimiter(2);
-  private static final SlewRateLimiter yLimiter = new SlewRateLimiter(2);
-  private static final SlewRateLimiter rotLimiter = new SlewRateLimiter(2);
+  private static final SlewRateLimiter xLimiter = new SlewRateLimiter(99999);
+  private static final SlewRateLimiter yLimiter = new SlewRateLimiter(99999);
+  private static final SlewRateLimiter rotLimiter = new SlewRateLimiter(99999);
 
   private DriveCommands() {}
 
@@ -92,7 +92,7 @@ public class DriveCommands {
           // Convert to field relative speeds & send command
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  xLimiter.calculate(linearVelocity.getX()) * drive.getMaxLinearSpeedMetersPerSec(),
+                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
                   yLimiter.calculate(linearVelocity.getY()) * drive.getMaxLinearSpeedMetersPerSec(),
                   omega * drive.getMaxAngularSpeedRadPerSec());
           boolean isFlipped =

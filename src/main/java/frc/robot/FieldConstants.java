@@ -72,32 +72,34 @@ public class FieldConstants {
           new Pose2d(
               Units.inchesToMeters(144.003),
               Units.inchesToMeters(158.500),
-              Rotation2d.fromDegrees(180));
+              Rotation2d.fromDegrees(0)); // inward facing instead
       centerFaces[1] =
           new Pose2d(
               Units.inchesToMeters(160.373),
               Units.inchesToMeters(186.857),
-              Rotation2d.fromDegrees(120));
+              Rotation2d.fromDegrees(-60)); // inward facing instead
       centerFaces[2] =
           new Pose2d(
               Units.inchesToMeters(193.116),
               Units.inchesToMeters(186.858),
-              Rotation2d.fromDegrees(60));
+              Rotation2d.fromDegrees(-120)); // inward facing instead
       centerFaces[3] =
           new Pose2d(
               Units.inchesToMeters(209.489),
               Units.inchesToMeters(158.502),
-              Rotation2d.fromDegrees(0));
+              Rotation2d.fromDegrees(180)); // inward facing instead
       centerFaces[4] =
           new Pose2d(
               Units.inchesToMeters(193.118),
               Units.inchesToMeters(130.145),
-              Rotation2d.fromDegrees(-60));
+              Rotation2d.fromDegrees(120)); // inward facing instead
       centerFaces[5] =
           new Pose2d(
               Units.inchesToMeters(160.375),
               Units.inchesToMeters(130.144),
-              Rotation2d.fromDegrees(-120));
+              Rotation2d.fromDegrees(60)); // inward facing instead
+
+      // centerFaces[4].plus(new Transform2d(Translation2d(new Vector<>), new Rotation2d)
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {

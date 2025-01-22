@@ -78,6 +78,7 @@ public class Drive extends SubsystemBase {
       Math.PI * 1.5; // .75 rotation per second max angular velocity.  Adjust for max turning rate
   private final double TurtleAngularRate =
       Math.PI * 0.5; // .25 rotation per second max angular velocity.  Adjust for max turning rate
+  public double maxSpeedPercentage = 1.0;
 
   // PathPlanner config constants
   private static final double ROBOT_MASS_KG = 74.088;
@@ -377,7 +378,11 @@ public class Drive extends SubsystemBase {
 
   /** Returns the maximum linear speed in meters per sec. */
   public double getMaxLinearSpeedMetersPerSec() {
-    return turtleMode ? TurtleSpeed : TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    var speed =
+        turtleMode
+            ? TunerConstants.kSpeedAt12Volts.in(MetersPerSecond) * TurtleSpeed
+            : TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
+    return speed * maxSpeedPercentage;
   }
 
   /** Returns the maximum angular speed in radians per sec. */
@@ -393,6 +398,11 @@ public class Drive extends SubsystemBase {
   /** Sets the current value of turtleMode */
   public Command toggleTurtleMode() {
     return runOnce(() -> turtleMode = !turtleMode);
+  }
+
+  /** Sets the current value of maxSpeedPercentage */
+  public void setMaxSpeed(double max) {
+    maxSpeedPercentage = max;
   }
 
   /** Returns an array of module translations. */

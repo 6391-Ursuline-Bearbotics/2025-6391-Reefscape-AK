@@ -19,6 +19,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -32,6 +33,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.arm.Arm;
+import frc.robot.subsystems.arm.ArmIO;
+import frc.robot.subsystems.arm.ArmIOTalonFX;
+import frc.robot.subsystems.arm.ArmIOTalonFXSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -48,6 +53,8 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.util.PositionTracker;
+
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -60,10 +67,13 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
+  PositionTracker positionTracker = new PositionTracker();
+  
   // Subsystems
   private final Drive drive;
   private final Vision vision;
   private final Elevator elevator;
+  private final Arm arm;
 
   private SwerveDriveSimulation driveSimulation = null;
 
@@ -73,6 +83,12 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+  private final LoggedDashboardChooser<Double> speedChooser =
+      new LoggedDashboardChooser<>("Swerve Speed");
+  ;
+  // private final LoggedDashboardChooser<ScoreLevel> reefHeight;
+  // private final LoggedDashboardChooser<ReefFace> reefFace;
+  // private final LoggedDashboardChooser<ReefPipe> reefPipe;
 
   private Mechanism2d mechanisms = new Mechanism2d(5, 3);
   private MechanismRoot2d root = mechanisms.getRoot("root", 2.5, 0.25);
@@ -100,6 +116,8 @@ public class RobotContainer {
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+    DriverStation.silenceJoystickConnectionWarning(true);
+
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
@@ -115,7 +133,8 @@ public class RobotContainer {
                 drive::addVisionMeasurement,
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
                 new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
-        elevator = new Elevator(new ElevatorIOTalonFX());
+        elevator = new Elevator(new ElevatorIOTalonFX(), positionTracker);
+        arm = new Arm(new ArmIOTalonFX(), positionTracker);
         break;
 
       case SIM:
@@ -137,7 +156,8 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
-        elevator = new Elevator(new ElevatorIOTalonFXSim(elevatorLigament));
+        elevator = new Elevator(new ElevatorIOTalonFXSim(elevatorLigament), positionTracker);
+        arm = new Arm(new ArmIOTalonFXSim(armLigament), positionTracker);
         break;
 
       default:
@@ -150,7 +170,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
-        elevator = new Elevator(new ElevatorIO() {});
+        elevator = new Elevator(new ElevatorIO() {}, positionTracker);
+        arm = new Arm(new ArmIO() {}, positionTracker);
         break;
     }
 
@@ -173,6 +194,19 @@ public class RobotContainer {
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
+    speedChooser.addDefaultOption("100%", 1.0);
+    speedChooser.addOption("95%", 0.95);
+    speedChooser.addOption("90%", 0.9);
+    speedChooser.addOption("85%", 0.85);
+    speedChooser.addOption("80%", 0.8);
+    speedChooser.addOption("75%", 0.75);
+    speedChooser.addOption("70%", 0.7);
+    speedChooser.addOption("65%", 0.65);
+    speedChooser.addOption("60%", 0.6);
+    speedChooser.addOption("55%", 0.55);
+    speedChooser.addOption("50%", 0.5);
+    speedChooser.addOption("35%", 0.35);
+
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -189,15 +223,6 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
 
-    // Lock to 0° when A button is held
-    drv.a()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> new Rotation2d()));
-
-    // Switch to X pattern when X button is pressed
-    drv.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
     // Reset gyro to 0° when B button is pressed
     final Runnable resetGyro =
         Constants.currentMode == Constants.Mode.SIM
@@ -213,6 +238,14 @@ public class RobotContainer {
 
     // Turtle Mode toggle
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
+
+    /* op.y().onTrue(elevator.setHeight(ScoreLevel.L4));
+    op.x().onTrue(elevator.setHeight(ScoreLevel.L3));
+    op.b().onTrue(elevator.setHeight(ScoreLevel.L2));
+    op.a().onTrue(elevator.setHeight(ScoreLevel.L1)); */
+
+    // Trigger speedPick = new Trigger(() -> drive.maxSpeedPercentage != speedChooser.get());
+    // speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));
   }
 
   /**
