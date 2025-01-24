@@ -43,7 +43,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.drive.ModuleIOTalonFXReal;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
@@ -54,7 +54,6 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.PositionTracker;
-
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -68,7 +67,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   PositionTracker positionTracker = new PositionTracker();
-  
+
   // Subsystems
   private final Drive drive;
   private final Vision vision;
@@ -124,10 +123,11 @@ public class RobotContainer {
         drive =
             new Drive(
                 new GyroIOPigeon2(),
-                new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                new ModuleIOTalonFX(TunerConstants.FrontRight),
-                new ModuleIOTalonFX(TunerConstants.BackLeft),
-                new ModuleIOTalonFX(TunerConstants.BackRight));
+                new ModuleIOTalonFXReal(TunerConstants.FrontLeft),
+                new ModuleIOTalonFXReal(TunerConstants.FrontRight),
+                new ModuleIOTalonFXReal(TunerConstants.BackLeft),
+                new ModuleIOTalonFXReal(TunerConstants.BackRight),
+                (pose) -> {});
         vision =
             new Vision(
                 drive::addVisionMeasurement,
@@ -148,7 +148,8 @@ public class RobotContainer {
                 new ModuleIOSim(driveSimulation.getModules()[0]),
                 new ModuleIOSim(driveSimulation.getModules()[0]),
                 new ModuleIOSim(driveSimulation.getModules()[0]),
-                new ModuleIOSim(driveSimulation.getModules()[0]));
+                new ModuleIOSim(driveSimulation.getModules()[0]),
+                driveSimulation::setSimulationWorldPose);
         vision =
             new Vision(
                 drive::addVisionMeasurement,
@@ -168,7 +169,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {},
-                new ModuleIO() {});
+                new ModuleIO() {},
+                (pose) -> {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {}, positionTracker);
         arm = new Arm(new ArmIO() {}, positionTracker);
