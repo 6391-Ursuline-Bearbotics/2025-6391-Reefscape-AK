@@ -369,9 +369,9 @@ public class Drive extends SubsystemBase implements Vision.VisionConsumer {
   }
 
   /** Resets the current odometry pose. */
-  public Command setPose(Pose2d pose) {
-    return runOnce(() -> poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose))
-        .ignoringDisable(true);
+  public void setPose(Pose2d pose) {
+    resetSimulationPoseCallBack.accept(pose);
+    poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
   }
 
   /** Adds a new timestamped vision measurement. */
@@ -379,8 +379,8 @@ public class Drive extends SubsystemBase implements Vision.VisionConsumer {
       Pose2d visionRobotPoseMeters,
       double timestampSeconds,
       Matrix<N3, N1> visionMeasurementStdDevs) {
-    poseEstimator.addVisionMeasurement(
-        visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+    /*     poseEstimator.addVisionMeasurement(
+    visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs); */
   }
 
   /** Adds a new timestamped vision measurement. */
@@ -404,7 +404,7 @@ public class Drive extends SubsystemBase implements Vision.VisionConsumer {
 
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
-    return turtleMode ? TurtleAngularRate : MaxAngularRate;
+    return turtleMode ? TurtleAngularRate : getMaxLinearSpeedMetersPerSec() / DRIVE_BASE_RADIUS;
   }
 
   /** Sets the current value of turtleMode */

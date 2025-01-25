@@ -47,11 +47,6 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
-  // Slew Rate Limiters to limit acceleration of joystick inputs
-  private static final SlewRateLimiter xLimiter = new SlewRateLimiter(99999);
-  private static final SlewRateLimiter yLimiter = new SlewRateLimiter(99999);
-  private static final SlewRateLimiter rotLimiter = new SlewRateLimiter(99999);
-
   private DriveCommands() {}
 
   private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
@@ -83,8 +78,7 @@ public class DriveCommands {
               getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
 
           // Apply rotation deadband
-          double omega =
-              rotLimiter.calculate(MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND));
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
 
           // Square rotation value for more precise control
           omega = Math.copySign(omega * omega, omega);
@@ -93,7 +87,7 @@ public class DriveCommands {
           ChassisSpeeds speeds =
               new ChassisSpeeds(
                   linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                  yLimiter.calculate(linearVelocity.getY()) * drive.getMaxLinearSpeedMetersPerSec(),
+                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                   omega * drive.getMaxAngularSpeedRadPerSec());
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
@@ -143,10 +137,8 @@ public class DriveCommands {
               // Convert to field relative speeds & send command
               ChassisSpeeds speeds =
                   new ChassisSpeeds(
-                      xLimiter.calculate(linearVelocity.getX())
-                          * drive.getMaxLinearSpeedMetersPerSec(),
-                      yLimiter.calculate(linearVelocity.getY())
-                          * drive.getMaxLinearSpeedMetersPerSec(),
+                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                       omega);
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()
