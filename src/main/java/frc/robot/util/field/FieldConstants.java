@@ -7,17 +7,10 @@
 
 package frc.robot.util.field;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.Filesystem;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -68,15 +61,15 @@ public class FieldConstants {
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
 
     public static final Pose2d[] centerFaces =
-        new Pose2d[]{
+        new Pose2d[] {
           new Pose2d(
-            Units.inchesToMeters(144.003),
-            Units.inchesToMeters(158.500),
-            Rotation2d.fromDegrees(180)),
-           new Pose2d(
-             Units.inchesToMeters(160.373),
-             Units.inchesToMeters(186.857),
-             Rotation2d.fromDegrees(120)),
+              Units.inchesToMeters(144.003),
+              Units.inchesToMeters(158.500),
+              Rotation2d.fromDegrees(180)),
+          new Pose2d(
+              Units.inchesToMeters(160.373),
+              Units.inchesToMeters(186.857),
+              Rotation2d.fromDegrees(120)),
           new Pose2d(
               Units.inchesToMeters(193.116),
               Units.inchesToMeters(186.858),
@@ -93,22 +86,19 @@ public class FieldConstants {
               Units.inchesToMeters(160.375),
               Units.inchesToMeters(130.144),
               Rotation2d.fromDegrees(-120))
-    }; // Starting facing the driver station in clockwise order
+        }; // Starting facing the driver station in clockwise order
     public static final ArrayList<Map<ReefHeight, Pose3d>> branchPositions =
         new ArrayList<>(13); // Starting at the right branch facing the driver station in clockwise
 
-    static
-    {
+    static {
       // Initialize branch positions
-      for (int face = 0; face < 6; face++)
-      {
+      for (int face = 0; face < 6; face++) {
         Map<ReefHeight, Pose3d> fillRight = new HashMap<>();
-        Map<ReefHeight, Pose3d> fillLeft  = new HashMap<>();
-        for (var level : ReefHeight.values())
-        {
+        Map<ReefHeight, Pose3d> fillLeft = new HashMap<>();
+        for (var level : ReefHeight.values()) {
           Pose2d poseDirection = new Pose2d(center, Rotation2d.fromDegrees(180 - (60 * face)));
-          double adjustX       = Units.inchesToMeters(30.738);
-          double adjustY       = Units.inchesToMeters(6.469);
+          double adjustX = Units.inchesToMeters(30.738);
+          double adjustY = Units.inchesToMeters(6.469);
 
           fillRight.put(
               level,
@@ -171,5 +161,4 @@ public class FieldConstants {
     public final double height;
     public final double pitch;
   }
-
 }
