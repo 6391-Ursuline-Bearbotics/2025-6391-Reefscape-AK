@@ -14,7 +14,6 @@
 package frc.robot;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
-import static frc.robot.subsystems.vision.VisionConstants.robotToCamera1;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -34,6 +33,10 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.arm.Arm;
+import frc.robot.subsystems.arm.ArmIO;
+import frc.robot.subsystems.arm.ArmIOTalonFX;
+import frc.robot.subsystems.arm.ArmIOTalonFXSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -41,11 +44,16 @@ import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.ModuleIOTalonFXSim;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFXSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.util.PositionTracker;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -58,11 +66,13 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
+  PositionTracker positionTracker = new PositionTracker();
+
   // Subsystems
   private final Drive drive;
   private final Vision vision;
-  // private final Elevator elevator;
-  // private final Arm arm;
+  private final Elevator elevator;
+  private final Arm arm;
 
   private SwerveDriveSimulation driveSimulation = null;
 
@@ -123,7 +133,8 @@ public class RobotContainer {
                 drive,
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
                 new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
-
+        elevator = new Elevator(new ElevatorIOTalonFX(), positionTracker);
+        arm = new Arm(new ArmIOTalonFX(), positionTracker);
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
@@ -146,7 +157,8 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
-
+        elevator = new Elevator(new ElevatorIOTalonFXSim(elevatorLigament), positionTracker);
+        arm = new Arm(new ArmIOTalonFXSim(armLigament), positionTracker);
         break;
 
       default:
@@ -160,7 +172,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
-
+        elevator = new Elevator(new ElevatorIO() {}, positionTracker);
+        arm = new Arm(new ArmIO() {}, positionTracker);
         break;
     }
 
