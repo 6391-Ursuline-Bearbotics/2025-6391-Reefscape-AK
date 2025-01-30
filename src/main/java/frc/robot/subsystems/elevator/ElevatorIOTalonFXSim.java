@@ -11,7 +11,6 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 
 public class ElevatorIOTalonFXSim extends ElevatorIOTalonFX {
   private TalonFXSimState elevatorSimMotor;
-  private final DCMotor elevatorMotor = DCMotor.getFalcon500(1);
   private final MechanismLigament2d ligament;
 
   private double appliedVolts = 0.0;
@@ -19,7 +18,7 @@ public class ElevatorIOTalonFXSim extends ElevatorIOTalonFX {
 
   private final ElevatorSim elevatorSim =
       new ElevatorSim(
-          elevatorMotor,
+          DCMotor.getFalcon500(2),
           ELEVATORGEARING,
           CARRIAGEMASS,
           ELEVATORDRUMRADIUS,
@@ -42,20 +41,10 @@ public class ElevatorIOTalonFXSim extends ElevatorIOTalonFX {
 
     elevatorSimMotor.setSupplyVoltage(RobotController.getBatteryVoltage());
 
-    inputs.positionRad = elevatorSim.getPositionMeters();
-    inputs.velocityRadPerSec = elevatorSim.getVelocityMetersPerSecond();
+    inputs.positionMeters = elevatorSim.getPositionMeters();
+    inputs.velocityMetersPerSec = elevatorSim.getVelocityMetersPerSecond();
     inputs.appliedVolts = appliedVolts;
     inputs.currentAmps = elevatorSim.getCurrentDrawAmps();
     ligament.setLength(elevatorSim.getPositionMeters());
-  }
-
-  @Override
-  public void setVoltage(double volts) {
-    appliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-  }
-
-  @Override
-  public void setPosition(double meters) {
-    appliedPosition = MathUtil.clamp(meters, MINELEVATORHEIGHTMETERS, MAXELEVATORHEIGHTMETERS);
   }
 }

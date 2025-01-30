@@ -38,6 +38,10 @@ public class Arm extends SubsystemBase {
         () -> io.setVoltage(0.0));
   }
 
+  public Command runAngle(double angle) {
+    return runOnce(() -> io.setAngle(angle));
+  }
+
   public double getPosition() {
     return inputs.positionRad;
   }

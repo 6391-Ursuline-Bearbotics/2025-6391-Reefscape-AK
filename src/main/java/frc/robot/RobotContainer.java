@@ -54,6 +54,8 @@ import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.PositionTracker;
+import frc.robot.util.TargetingSystem;
+import frc.robot.util.TargetingSystem.ReefBranchLevel;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -67,6 +69,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   PositionTracker positionTracker = new PositionTracker();
+  TargetingSystem target = new TargetingSystem();
 
   // Subsystems
   private final Drive drive;
@@ -241,10 +244,19 @@ public class RobotContainer {
     // Turtle Mode toggle
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
 
-    /* op.y().onTrue(elevator.setHeight(ScoreLevel.L4));
-    op.x().onTrue(elevator.setHeight(ScoreLevel.L3));
-    op.b().onTrue(elevator.setHeight(ScoreLevel.L2));
-    op.a().onTrue(elevator.setHeight(ScoreLevel.L1)); */
+    op.y().onTrue(target.setTargetLevel(ReefBranchLevel.L4));
+    op.x().onTrue(target.setTargetLevel(ReefBranchLevel.L3));
+    op.b().onTrue(target.setTargetLevel(ReefBranchLevel.L2));
+    op.a().onTrue(target.setTargetLevel(ReefBranchLevel.L1));
+
+    op.leftBumper().onTrue(target.moveTargetBranchLeft());
+    op.rightBumper().onTrue(target.moveTargetBranchRight());
+
+    op.start()
+        .onTrue(
+            elevator
+                .runHeight(target.getTargetBranchHeightMeters())
+                .alongWith(arm.runAngle(target.getTargetBranchCoralArmAngle())));
 
     // Trigger speedPick = new Trigger(() -> drive.maxSpeedPercentage != speedChooser.get());
     // speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));

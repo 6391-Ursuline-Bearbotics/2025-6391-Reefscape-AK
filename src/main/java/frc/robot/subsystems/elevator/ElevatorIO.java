@@ -5,8 +5,8 @@ import org.littletonrobotics.junction.AutoLog;
 public interface ElevatorIO {
   @AutoLog
   public static class ElevatorIOInputs {
-    public double positionRad = 0.0;
-    public double velocityRadPerSec = 0.0;
+    public double positionMeters = 0.0;
+    public double velocityMetersPerSec = 0.0;
     public double appliedVolts = 0.0;
     public double currentAmps = 0.0;
   }
@@ -18,5 +18,5 @@ public interface ElevatorIO {
   public default void setVoltage(double volts) {}
 
   /** Run closed loop profiled position control. */
-  public default void setPosition(double rotations) {}
+  public default void setHeight(double height) {}
 }

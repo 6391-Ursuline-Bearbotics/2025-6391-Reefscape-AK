@@ -46,8 +46,8 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   public void updateInputs(ElevatorIOInputs inputs) {
     BaseStatusSignal.refreshAll(positionRot, velocityRotPerSec, appliedVolts, currentAmps);
 
-    inputs.positionRad = Units.rotationsToRadians(positionRot.getValueAsDouble());
-    inputs.velocityRadPerSec = Units.rotationsToRadians(velocityRotPerSec.getValueAsDouble());
+    inputs.positionMeters = Units.rotationsToRadians(positionRot.getValueAsDouble());
+    inputs.velocityMetersPerSec = Units.rotationsToRadians(velocityRotPerSec.getValueAsDouble());
     inputs.appliedVolts = appliedVolts.getValueAsDouble();
     inputs.currentAmps = currentAmps.getValueAsDouble();
   }
@@ -58,7 +58,11 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   }
 
   @Override
-  public void setPosition(double rotations) {
-    elevator.setControl(motionMagic.withPosition(rotations));
+  public void setHeight(double height) {
+    elevator.setControl(motionMagic.withPosition(heightToRotations(height)));
+  }
+
+  protected double heightToRotations(double height) {
+    return ELEVATORDRUMRADIUS * Math.PI * 2 / height;
   }
 }

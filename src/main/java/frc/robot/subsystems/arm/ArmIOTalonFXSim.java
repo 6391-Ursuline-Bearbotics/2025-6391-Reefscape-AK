@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 
 public class ArmIOTalonFXSim extends ArmIOTalonFX {
   private TalonFXSimState armSimMotor;
-  private final DCMotor armMotor = DCMotor.getFalcon500(1);
   private final MechanismLigament2d ligament;
 
   private double appliedVolts = 0.0;
@@ -20,7 +19,7 @@ public class ArmIOTalonFXSim extends ArmIOTalonFX {
 
   private final SingleJointedArmSim armSim =
       new SingleJointedArmSim(
-          armMotor,
+          DCMotor.getFalcon500(1),
           ARMGEARING,
           SingleJointedArmSim.estimateMOI(ARMLENGTH, ARMMASS),
           ARMLENGTH,
@@ -58,5 +57,6 @@ public class ArmIOTalonFXSim extends ArmIOTalonFX {
   @Override
   public void setAngle(double angle) {
     appliedPosition = MathUtil.clamp(Units.degreesToRadians(angle), MINARMANGLE, MAXARMANGLE);
+    armSimMotor.setRawRotorPosition(Units.degreesToRadians(angle) / 360.0);
   }
 }

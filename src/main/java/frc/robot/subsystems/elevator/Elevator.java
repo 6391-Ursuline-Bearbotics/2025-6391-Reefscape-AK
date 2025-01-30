@@ -39,8 +39,12 @@ public class Elevator extends SubsystemBase {
         () -> io.setVoltage(0.0));
   }
 
+  public Command runHeight(double height) {
+    return runOnce(() -> io.setHeight(height));
+  }
+
   public double getPosition() {
-    return inputs.positionRad;
+    return inputs.positionMeters;
   }
 
   @AutoLogOutput(key = "Mech2D/FrameComponentPose")
