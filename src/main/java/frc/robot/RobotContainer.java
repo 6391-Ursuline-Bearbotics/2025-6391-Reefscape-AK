@@ -33,10 +33,14 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.arm.Arm;
-import frc.robot.subsystems.arm.ArmIO;
-import frc.robot.subsystems.arm.ArmIOTalonFX;
-import frc.robot.subsystems.arm.ArmIOTalonFXSim;
+import frc.robot.subsystems.Arm.Arm;
+import frc.robot.subsystems.Arm.ArmIO;
+import frc.robot.subsystems.Arm.ArmIOSim;
+import frc.robot.subsystems.Arm.ArmIOTalonFX;
+import frc.robot.subsystems.Elevator.Elevator;
+import frc.robot.subsystems.Elevator.ElevatorIO;
+import frc.robot.subsystems.Elevator.ElevatorIOSim;
+import frc.robot.subsystems.Elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -44,16 +48,11 @@ import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.ModuleIOTalonFXSim;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorIO;
-import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
-import frc.robot.subsystems.elevator.ElevatorIOTalonFXSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.util.PositionTracker;
 import frc.robot.util.TargetingSystem;
 import frc.robot.util.TargetingSystem.ReefBranchLevel;
 import org.ironmaple.simulation.SimulatedArena;
@@ -68,7 +67,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-  PositionTracker positionTracker = new PositionTracker();
   TargetingSystem target = new TargetingSystem();
 
   // Subsystems
@@ -136,8 +134,8 @@ public class RobotContainer {
                 drive,
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
                 new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
-        elevator = new Elevator(new ElevatorIOTalonFX(), positionTracker);
-        arm = new Arm(new ArmIOTalonFX(), positionTracker);
+        elevator = new Elevator(new ElevatorIOTalonFX(), false);
+        arm = new Arm(new ArmIOTalonFX(), false, () -> elevator.getCarriageComponentPose());
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
@@ -160,8 +158,8 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
-        elevator = new Elevator(new ElevatorIOTalonFXSim(elevatorLigament), positionTracker);
-        arm = new Arm(new ArmIOTalonFXSim(armLigament), positionTracker);
+        elevator = new Elevator(new ElevatorIOSim(elevatorLigament), true);
+        arm = new Arm(new ArmIOSim(armLigament), true, () -> elevator.getCarriageComponentPose());
         break;
 
       default:
@@ -175,8 +173,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
-        elevator = new Elevator(new ElevatorIO() {}, positionTracker);
-        arm = new Arm(new ArmIO() {}, positionTracker);
+        elevator = new Elevator(new ElevatorIO() {}, true);
+        arm = new Arm(new ArmIO() {}, true, () -> elevator.getCarriageComponentPose());
         break;
     }
 
@@ -254,9 +252,9 @@ public class RobotContainer {
 
     op.start()
         .onTrue(
-            elevator
-                .runHeight(target.getTargetBranchHeightMeters())
-                .alongWith(arm.runAngle(target.getTargetBranchCoralArmAngle())));
+            Commands.parallel(
+                elevator.setStateCommand(Elevator.State.LEVEL_1),
+                arm.setStateCommand(Arm.State.LEVEL_1)));
 
     // Trigger speedPick = new Trigger(() -> drive.maxSpeedPercentage != speedChooser.get());
     // speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));

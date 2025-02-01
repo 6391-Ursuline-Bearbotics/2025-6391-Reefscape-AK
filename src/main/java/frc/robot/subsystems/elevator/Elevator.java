@@ -1,50 +1,84 @@
-package frc.robot.subsystems.elevator;
+package frc.robot.subsystems.Elevator;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.util.PositionTracker;
-import java.util.function.DoubleSupplier;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiledSubsystem;
+import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiledSubsystem.TargetState;
+import frc.robot.util.Util;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
 
-public class Elevator extends SubsystemBase {
-  private final ElevatorIO io;
-  private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
-  private final PositionTracker positionTracker;
+@Setter
+@Getter
+public class Elevator extends GenericMotionProfiledSubsystem<Elevator.State> {
 
-  public Elevator(ElevatorIO io, PositionTracker positionTracker) {
-    this.io = io;
-    this.positionTracker = positionTracker;
+  @RequiredArgsConstructor
+  @Getter
+  public enum State implements TargetState {
+    HOMING(
+        -0.2, 0.0, ProfileType.OPEN_VOLTAGE), // TODO: Test Voltage and position values (rotations)
+    // (elevator)
+    HOME(0.305, 0.0, ProfileType.MM_POSITION),
+    INTAKE(0.05, 0.0, ProfileType.MM_POSITION),
+    LEVEL_1(0.45, 0.0, ProfileType.MM_POSITION),
+    LEVEL_2(1, 0.0, ProfileType.MM_POSITION),
+    LEVEL_3(2, 0.0, ProfileType.MM_POSITION),
+    LEVEL_4(3.75, 0.0, ProfileType.MM_POSITION),
+    CORAL_STATION(0.6, 0.0, ProfileType.MM_POSITION),
+    ALGAE_LOWER(0.5, 0.0, ProfileType.MM_POSITION),
+    ALGAE_UPPER(0.8, 0.0, ProfileType.MM_POSITION),
+    NET(9.0, 0.0, ProfileType.MM_POSITION);
 
-    positionTracker.setElevatorPositionSupplier(this::getPosition);
-    positionTracker.setCarriagePoseSupplier(this::getCarriageComponentPose);
+    private final double output;
+    private final double feedFwd;
+    private final ProfileType profileType;
   }
 
-  @Override
-  public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Elevator", inputs);
+  @Getter @Setter private State state = State.HOME;
+
+  @Getter public final Alert homedAlert = new Alert("NEW HOME SET", Alert.AlertType.kInfo);
+
+  /** Constructor */
+  public Elevator(ElevatorIO io, boolean isSim) {
+    super(ProfileType.MM_POSITION, ElevatorConstants.kSubSysConstants, io, isSim);
   }
 
-  public Command runPercent(double percent) {
-    return runEnd(() -> io.setVoltage(percent * 12.0), () -> io.setVoltage(0.0));
+  public Command setStateCommand(State state) {
+    return startEnd(() -> this.state = state, () -> this.state = State.HOME);
   }
 
-  public Command runTeleop(DoubleSupplier up, DoubleSupplier down) {
-    return runEnd(
-        () -> io.setVoltage((up.getAsDouble() - down.getAsDouble()) * 12.0),
-        () -> io.setVoltage(0.0));
+  private Debouncer homedDebouncer = new Debouncer(.25, DebounceType.kRising);
+
+  public Trigger homedTrigger =
+      new Trigger(
+          () ->
+              homedDebouncer.calculate(
+                  (this.state == State.HOMING && Math.abs(io.getVelocity()) < .001)));
+
+  public Command zeroSensorCommand() {
+    return new InstantCommand(() -> io.zeroSensors());
   }
 
-  public Command runHeight(double height) {
-    return runOnce(() -> io.setHeight(height));
+  public boolean atPosition(double tolerance) {
+    return Util.epsilonEquals(io.getPosition(), state.output, Math.max(1, tolerance));
   }
 
-  public double getPosition() {
-    return inputs.positionMeters;
+  public Command homedAlertCommand() {
+    return new SequentialCommandGroup(
+        new InstantCommand(() -> homedAlert.set(true)),
+        Commands.waitSeconds(1),
+        new InstantCommand(() -> homedAlert.set(false)));
   }
 
   @AutoLogOutput(key = "Mech2D/FrameComponentPose")
@@ -55,14 +89,14 @@ public class Elevator extends SubsystemBase {
   @AutoLogOutput(key = "Mech2D/StageComponentPose")
   public Pose3d getStageComponentPose() {
     Transform3d transform = new Transform3d();
-    if (getPosition() > 0.706) {
-      transform = new Transform3d(0, 0, getPosition() - 0.706, new Rotation3d());
+    if (io.getPosition() > 0.706) {
+      transform = new Transform3d(0, 0, io.getPosition() - 0.706, new Rotation3d());
     }
     return new Pose3d(0.14, 0, 0.169, new Rotation3d()).plus(transform);
   }
 
   @AutoLogOutput(key = "Mech2D/CarriageComponentPose")
   public Pose3d getCarriageComponentPose() {
-    return new Pose3d(0.14, 0, 0.247 + getPosition(), new Rotation3d());
+    return new Pose3d(0.14, 0, 0.247 + io.getPosition(), new Rotation3d());
   }
 }
