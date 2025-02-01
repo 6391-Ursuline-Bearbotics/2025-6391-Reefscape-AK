@@ -53,6 +53,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.subsystems.vision.VisionIOQuestNav;
 import frc.robot.util.TargetingSystem;
 import frc.robot.util.TargetingSystem.ReefBranchLevel;
 import org.ironmaple.simulation.SimulatedArena;
@@ -133,7 +134,8 @@ public class RobotContainer {
             new Vision(
                 drive,
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
-                new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
+                new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation),
+                new VisionIOQuestNav(VisionConstants.questName));
         elevator = new Elevator(new ElevatorIOTalonFX(), false);
         arm = new Arm(new ArmIOTalonFX(), false, () -> elevator.getCarriageComponentPose());
         break;
@@ -177,6 +179,9 @@ public class RobotContainer {
         arm = new Arm(new ArmIO() {}, true, () -> elevator.getCarriageComponentPose());
         break;
     }
+
+    // QuestNav initialization
+    //vision.
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
