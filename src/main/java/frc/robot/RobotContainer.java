@@ -13,6 +13,8 @@
 
 package frc.robot;
 
+import static edu.wpi.first.wpilibj2.command.Commands.parallel;
+import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -28,8 +30,8 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -181,7 +183,7 @@ public class RobotContainer {
     }
 
     // QuestNav initialization
-    //vision.
+    // vision.
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -242,7 +244,7 @@ public class RobotContainer {
             : () ->
                 drive.setPose(
                     new Pose2d(drive.getPose().getTranslation(), new Rotation2d())); // zero gyro
-    drv.start().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
+    drv.start().onTrue(runOnce(resetGyro, drive).ignoringDisable(true));
 
     // Turtle Mode toggle
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
@@ -257,12 +259,21 @@ public class RobotContainer {
 
     op.start()
         .onTrue(
-            Commands.parallel(
+            parallel(
                 elevator.setStateCommand(Elevator.State.LEVEL_1),
                 arm.setStateCommand(Arm.State.LEVEL_1)));
 
-    // Trigger speedPick = new Trigger(() -> drive.maxSpeedPercentage != speedChooser.get());
-    // speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));
+    Trigger speedPick =
+        new Trigger(
+            () -> {
+              Double chosenSpeed = speedChooser.get();
+              // If chosenSpeed is null, we consider the condition to be false
+              if (chosenSpeed == null) {
+                return false;
+              }
+              return drive.maxSpeedPercentage != chosenSpeed;
+            });
+    speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));
   }
 
   /**
