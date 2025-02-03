@@ -15,9 +15,11 @@ package frc.robot;
 
 import static edu.wpi.first.wpilibj2.command.Commands.parallel;
 import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
+import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -57,7 +59,7 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOQuestNav;
 import frc.robot.util.TargetingSystem;
-import frc.robot.util.TargetingSystem.ReefBranchLevel;
+import frc.robot.util.TargetingSystem.ElevatorState;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -186,7 +188,12 @@ public class RobotContainer {
     // vision.
 
     // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    autoChooser =
+        new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser("Right 3 L4"));
+
+    for (String auto : AutoBuilder.getAllAutoNames()) {
+      autoChooser.addOption(auto.replace("Right", "Left"), new PathPlannerAuto(auto, true));
+    }
 
     // Set up SysId routines
     autoChooser.addOption(
@@ -233,7 +240,7 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
 
-    // Reset gyro to 0° when B button is pressed
+    // Reset gyro to 0° when start button is pressed
     final Runnable resetGyro =
         Constants.currentMode == Constants.Mode.SIM
             ? () ->
@@ -249,10 +256,13 @@ public class RobotContainer {
     // Turtle Mode toggle
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
 
-    op.y().onTrue(target.setTargetLevel(ReefBranchLevel.L4));
-    op.x().onTrue(target.setTargetLevel(ReefBranchLevel.L3));
-    op.b().onTrue(target.setTargetLevel(ReefBranchLevel.L2));
-    op.a().onTrue(target.setTargetLevel(ReefBranchLevel.L1));
+    // While Right Bumper is held drive robot relative
+    drv.rightBumper().whileTrue(DriveCommands.joystickRobotDrive(drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
+
+    op.y().onTrue(target.setTargetLevel(ElevatorState.LEVEL_4));
+    op.x().onTrue(target.setTargetLevel(ElevatorState.LEVEL_3));
+    op.b().onTrue(target.setTargetLevel(ElevatorState.LEVEL_2));
+    op.a().onTrue(target.setTargetLevel(ElevatorState.LEVEL_1));
 
     op.leftBumper().onTrue(target.moveTargetBranchLeft());
     op.rightBumper().onTrue(target.moveTargetBranchRight());
@@ -260,8 +270,9 @@ public class RobotContainer {
     op.start()
         .onTrue(
             parallel(
-                elevator.setStateCommand(Elevator.State.LEVEL_1),
-                arm.setStateCommand(Arm.State.LEVEL_1)));
+                elevator.setStateCommand(target.getElevatorState()),
+                waitUntil(() -> elevator.atPosition(0.1))
+                    .andThen(arm.setStateCommand(target.getArmState()))));
 
     Trigger speedPick =
         new Trigger(

@@ -95,9 +95,7 @@ public final class ElevatorConstants {
     // Elevator Simulation
     kSubSysConstants.kElevSimConfig.kDefaultSetpoint = 0.0; // Meters
     kSubSysConstants.kElevSimConfig.kCarriageMass = Units.lbsToKilograms(12.5); // Kilograms
-    kSubSysConstants.kElevSimConfig.kElevatorDrumRadius = Units.inchesToMeters(1) * 3; // Meters
-    // May want to triple "drum size" to account for the x3 scale in the cascading
-    // elevator
+    kSubSysConstants.kElevSimConfig.kElevatorDrumRadius = Units.inchesToMeters(1) * 2; // Meters
     kSubSysConstants.kElevSimConfig.kMinElevatorHeight = Units.inchesToMeters(12); // Meters
     kSubSysConstants.kElevSimConfig.kMaxElevatorHeight = Units.inchesToMeters(72); // Meters
     kSubSysConstants.kElevSimConfig.kElevatorGearing =
