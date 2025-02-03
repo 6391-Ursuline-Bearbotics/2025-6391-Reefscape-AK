@@ -18,7 +18,6 @@ import frc.robot.util.field.FieldConstants.Reef;
 import frc.robot.util.field.FieldConstants.ReefHeight;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 
 public class TargetingSystem {
@@ -26,7 +25,7 @@ public class TargetingSystem {
   private AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
   private ReefBranch targetBranch = ReefBranch.A;
-  private ElevatorState targetBranchLevel = ElevatorState.LEVEL_4;
+  private ElevatorState targetBranchLevel = ElevatorState.LEVEL_1;
   private Transform2d robotBranchScoringOffset =
       new Transform2d(Inches.of(12).in(Meters), Inches.of(0).in(Meters), Rotation2d.fromDegrees(0));
 

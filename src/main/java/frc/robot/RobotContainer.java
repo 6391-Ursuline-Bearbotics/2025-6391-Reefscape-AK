@@ -257,7 +257,10 @@ public class RobotContainer {
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
 
     // While Right Bumper is held drive robot relative
-    drv.rightBumper().whileTrue(DriveCommands.joystickRobotDrive(drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
+    drv.rightBumper()
+        .whileTrue(
+            DriveCommands.joystickRobotDrive(
+                drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
 
     op.y().onTrue(target.setTargetLevel(ElevatorState.LEVEL_4));
     op.x().onTrue(target.setTargetLevel(ElevatorState.LEVEL_3));
@@ -270,9 +273,9 @@ public class RobotContainer {
     op.start()
         .onTrue(
             parallel(
-                elevator.setStateCommand(target.getElevatorState()),
+                elevator.setStateCommand(() -> target.getElevatorState()),
                 waitUntil(() -> elevator.atPosition(0.1))
-                    .andThen(arm.setStateCommand(target.getArmState()))));
+                    .andThen(arm.setStateCommand(() -> target.getArmState()))));
 
     Trigger speedPick =
         new Trigger(

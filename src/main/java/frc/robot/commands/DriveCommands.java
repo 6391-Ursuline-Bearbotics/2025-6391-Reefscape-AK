@@ -102,7 +102,7 @@ public class DriveCommands {
         drive);
   }
 
-    /**
+  /**
    * Robot relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickRobotDrive(
@@ -195,7 +195,7 @@ public class DriveCommands {
         .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
   }
 
-    /**
+  /**
    * Field relative drive command using joystick for linear control and PID for angular control.
    * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
    * absolute rotation with a joystick.
