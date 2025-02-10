@@ -11,6 +11,7 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,7 +22,8 @@ public class FieldConstants {
   public static final double fieldLength = Units.inchesToMeters(690.876);
   public static final double fieldWidth = Units.inchesToMeters(317);
   public static final double startingLineX =
-      Units.inchesToMeters(299.438); // Measured from the inside of starting line
+      Units.inchesToMeters(299.438); // Measured from the inside of starting
+  // line
 
   public static class Processor {
     public static final Pose2d centerFace =
@@ -58,39 +60,51 @@ public class FieldConstants {
     public static final Translation2d center =
         new Translation2d(Units.inchesToMeters(176.746), Units.inchesToMeters(158.501));
     public static final double faceToZoneLine =
-        Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
+        Units.inchesToMeters(12); // Side of the reef to the inside of the
+    // reef zone line
 
     public static final Pose2d[] centerFaces =
-        new Pose2d[] {
+        new Pose2d[6]; // Starting facing the driver station in clockwise
+    // order
+    public static final List<Map<ReefHeight, Pose3d>> branchPositions =
+        new ArrayList<>(); // Starting at the right
+    // branch facing the
+    // driver station in
+    // clockwise
+
+    static {
+      // Initialize faces
+      centerFaces[0] =
           new Pose2d(
               Units.inchesToMeters(144.003),
               Units.inchesToMeters(158.500),
-              Rotation2d.fromDegrees(180)),
+              Rotation2d.fromDegrees(180));
+      centerFaces[1] =
           new Pose2d(
               Units.inchesToMeters(160.373),
               Units.inchesToMeters(186.857),
-              Rotation2d.fromDegrees(120)),
+              Rotation2d.fromDegrees(120));
+      centerFaces[2] =
           new Pose2d(
               Units.inchesToMeters(193.116),
               Units.inchesToMeters(186.858),
-              Rotation2d.fromDegrees(60)),
+              Rotation2d.fromDegrees(60));
+      centerFaces[3] =
           new Pose2d(
               Units.inchesToMeters(209.489),
               Units.inchesToMeters(158.502),
-              Rotation2d.fromDegrees(0)),
+              Rotation2d.fromDegrees(0));
+      centerFaces[4] =
           new Pose2d(
               Units.inchesToMeters(193.118),
               Units.inchesToMeters(130.145),
-              Rotation2d.fromDegrees(-60)),
+              Rotation2d.fromDegrees(-60));
+      centerFaces[5] =
           new Pose2d(
               Units.inchesToMeters(160.375),
               Units.inchesToMeters(130.144),
-              Rotation2d.fromDegrees(-120))
-        }; // Starting facing the driver station in clockwise order
-    public static final ArrayList<Map<ReefHeight, Pose3d>> branchPositions =
-        new ArrayList<>(13); // Starting at the right branch facing the driver station in clockwise
+              Rotation2d.fromDegrees(-120));
 
-    static {
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {
         Map<ReefHeight, Pose3d> fillRight = new HashMap<>();
@@ -131,8 +145,8 @@ public class FieldConstants {
                       Units.degreesToRadians(level.pitch),
                       poseDirection.getRotation().getRadians())));
         }
-        branchPositions.add(fillLeft);
         branchPositions.add(fillRight);
+        branchPositions.add(fillLeft);
       }
     }
   }

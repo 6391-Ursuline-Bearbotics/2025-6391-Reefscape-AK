@@ -1,4 +1,4 @@
-package frc.robot.subsystems.Elevator;
+package frc.robot.subsystems.Climber;
 
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
@@ -13,30 +13,30 @@ import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiled
 import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiledSubsystemConstants.simType;
 
 /** Add your docs here. */
-public final class ElevatorConstants {
+public final class ClimberConstants {
 
   public static final GenericMotionProfiledSubsystemConstants kSubSysConstants =
       new GenericMotionProfiledSubsystemConstants();
 
-  public static final double kHomingCurrent = 2.0;
+  public static final double kSupplyCurrentLimit = 75.0;
 
   static {
-    kSubSysConstants.kName = "Elevator";
+    kSubSysConstants.kName = "Climber";
 
-    kSubSysConstants.kLeaderMotor = Ports.ELEVATOR_MAIN;
-    kSubSysConstants.kFollowMotor = Ports.ELEVATOR_FOLLOWER;
-    kSubSysConstants.kFollowerOpposesMain = true;
+    kSubSysConstants.kLeaderMotor = Ports.CLIMBER;
+    // kSubSysConstants.kFollowMotor = Ports.CLIMBER_FOLLOWER;
+    // kSubSysConstants.kFollowerOpposesMain = true;
 
     // Using TalonFX internal encoder
     kSubSysConstants.kCANcoder = null;
     kSubSysConstants.kMotorConfig.Feedback.FeedbackSensorSource =
         FeedbackSensorSourceValue.RotorSensor;
-    kSubSysConstants.kMotorConfig.Feedback.SensorToMechanismRatio = 5.0;
+    kSubSysConstants.kMotorConfig.Feedback.SensorToMechanismRatio = 54.4;
     kSubSysConstants.kMotorConfig.Feedback.RotorToSensorRatio = 1.0;
 
     // Using a remote CANcoder
     /*
-     * kSubSysConstants.kCANcoder = Ports.ELEVATOR_CANCODER;
+     * kSubSysConstants.kCANcoder = Ports.CLIMBER_CANCODER;
      * kSubSysConstants.kMotorConfig.Feedback.FeedbackSensorSource =
      * FeedbackSensorSourceValue.FusedCANcoder;
      * kSubSysConstants.kMotorConfig.Feedback.SensorToMechanismRatio = 7.04;
@@ -59,51 +59,48 @@ public final class ElevatorConstants {
     kSubSysConstants.kMotorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
 
     /* REAL system profile constants */
-    kSubSysConstants.kMotorConfig.Slot0.kP = 0;
+    kSubSysConstants.kMotorConfig.Slot0.kP = 700;
     kSubSysConstants.kMotorConfig.Slot0.kI = 0;
-    kSubSysConstants.kMotorConfig.Slot0.kD = 0;
-    kSubSysConstants.kMotorConfig.Slot0.GravityType = GravityTypeValue.Elevator_Static;
-    kSubSysConstants.kMotorConfig.Slot0.kG = 0;
+    kSubSysConstants.kMotorConfig.Slot0.kD = 100;
+    kSubSysConstants.kMotorConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    kSubSysConstants.kMotorConfig.Slot0.kG = 13;
     kSubSysConstants.kMotorConfig.Slot0.kS = 0;
-    kSubSysConstants.kMotorConfig.Slot0.kV = 0;
+    kSubSysConstants.kMotorConfig.Slot0.kV = 0.19;
     kSubSysConstants.kMotorConfig.Slot0.kA = 0;
-    kSubSysConstants.kMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 0;
-    kSubSysConstants.kMotorConfig.MotionMagic.MotionMagicAcceleration = 0;
+    kSubSysConstants.kMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 500;
+    kSubSysConstants.kMotorConfig.MotionMagic.MotionMagicAcceleration = 50;
     kSubSysConstants.kMotorConfig.MotionMagic.MotionMagicJerk = 0;
 
     /* SIM system profile constants */
-    kSubSysConstants.kSimMotorConfig.Slot0.kP = 300.0;
-    kSubSysConstants.kSimMotorConfig.Slot0.kI = 50;
-    kSubSysConstants.kSimMotorConfig.Slot0.kD = 50;
-    kSubSysConstants.kSimMotorConfig.Slot0.GravityType = GravityTypeValue.Elevator_Static;
-    kSubSysConstants.kSimMotorConfig.Slot0.kG = 0.1;
+    kSubSysConstants.kSimMotorConfig.Slot0.kP = 700;
+    kSubSysConstants.kSimMotorConfig.Slot0.kI = 0;
+    kSubSysConstants.kSimMotorConfig.Slot0.kD = 100;
+    kSubSysConstants.kSimMotorConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    kSubSysConstants.kSimMotorConfig.Slot0.kG = 13;
     kSubSysConstants.kSimMotorConfig.Slot0.kS = 0;
-    kSubSysConstants.kSimMotorConfig.Slot0.kV = 0;
+    kSubSysConstants.kSimMotorConfig.Slot0.kV = 0.19;
     kSubSysConstants.kSimMotorConfig.Slot0.kA = 0;
-    kSubSysConstants.kSimMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 1000;
-    kSubSysConstants.kSimMotorConfig.MotionMagic.MotionMagicAcceleration = 1000;
+    kSubSysConstants.kSimMotorConfig.MotionMagic.MotionMagicCruiseVelocity = 500;
+    kSubSysConstants.kSimMotorConfig.MotionMagic.MotionMagicAcceleration = 50;
     kSubSysConstants.kSimMotorConfig.MotionMagic.MotionMagicJerk = 0;
 
     // Simulation Type
-    kSubSysConstants.SimType = simType.ELEVATOR;
+    kSubSysConstants.SimType = simType.ARM;
 
     // Motor simulation
     kSubSysConstants.kMotorSimConfig.simMotorModelSupplier = () -> DCMotor.getFalcon500(2);
 
-    // Elevator Simulation
-    kSubSysConstants.kElevSimConfig.kIsComboSim = true;
-    // Elevator Simulation
-    kSubSysConstants.kElevSimConfig.kDefaultSetpoint = 0.0; // Meters
-    kSubSysConstants.kElevSimConfig.kCarriageMass = Units.lbsToKilograms(12.5); // Kilograms
-    kSubSysConstants.kElevSimConfig.kElevatorDrumRadius = Units.inchesToMeters(1) * 2; // Meters
-    kSubSysConstants.kElevSimConfig.kMinElevatorHeight = Units.inchesToMeters(12); // Meters
-    kSubSysConstants.kElevSimConfig.kMaxElevatorHeight = Units.inchesToMeters(72); // Meters
-    kSubSysConstants.kElevSimConfig.kElevatorGearing =
-        5.0; // RotorToSensorRatio * SensorToMechanismRatio
-    kSubSysConstants.kElevSimConfig.kSensorReduction = 5.0; // SensorToMechanismRatio
-
-    // Calculate ratio of motor rotation to distance the top of the elevator moves
-    // 5:1 and then x3. Each rotation is 1.75in diameter x pi = 5.498in per rotation
-    // 0.2*3*5.498 = 3.2988in of cascading elevator travel per rotation of Kraken
+    // Climber Simulation
+    kSubSysConstants.kArmSimConfig.kArmMass = 8.0; // Kilograms
+    kSubSysConstants.kArmSimConfig.kArmLength =
+        Units.inchesToMeters(14); // - TODO: Fill in with real values once the climber is designed
+    kSubSysConstants.kArmSimConfig.kDefaultArmSetpointDegrees = 90.0;
+    kSubSysConstants.kArmSimConfig.kMinAngleDegrees = -10.0;
+    kSubSysConstants.kArmSimConfig.kMaxAngleDegrees = 135.0;
+    kSubSysConstants.kArmSimConfig.kArmReduction =
+        30; // RotorToSensorRatio * SensorToMechanismRatio - TODO: Fill in with real values once the
+    // climber is designed
+    kSubSysConstants.kArmSimConfig.kSensorReduction =
+        5; // SensorToMechanismRatio - TODO: Fill in with real values once the climber is designed
   }
 }

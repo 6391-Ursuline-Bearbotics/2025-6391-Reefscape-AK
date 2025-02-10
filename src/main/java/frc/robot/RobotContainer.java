@@ -13,9 +13,13 @@
 
 package frc.robot;
 
+import static edu.wpi.first.wpilibj2.command.Commands.parallel;
+import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
+import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
@@ -28,15 +32,19 @@ import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.arm.Arm;
-import frc.robot.subsystems.arm.ArmIO;
-import frc.robot.subsystems.arm.ArmIOTalonFX;
-import frc.robot.subsystems.arm.ArmIOTalonFXSim;
+import frc.robot.subsystems.Arm.Arm;
+import frc.robot.subsystems.Arm.ArmIO;
+import frc.robot.subsystems.Arm.ArmIOSim;
+import frc.robot.subsystems.Arm.ArmIOTalonFX;
+import frc.robot.subsystems.Elevator.Elevator;
+import frc.robot.subsystems.Elevator.ElevatorIO;
+import frc.robot.subsystems.Elevator.ElevatorIOSim;
+import frc.robot.subsystems.Elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -44,18 +52,18 @@ import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.ModuleIOTalonFXSim;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorIO;
-import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
-import frc.robot.subsystems.elevator.ElevatorIOTalonFXSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.util.PositionTracker;
+import frc.robot.subsystems.vision.VisionIOQuestNav;
 import frc.robot.util.TargetingSystem;
-import frc.robot.util.TargetingSystem.ReefBranchLevel;
+import frc.robot.util.TargetingSystem.ArmState;
+import frc.robot.util.TargetingSystem.ElevatorState;
+import frc.robot.util.field.AllianceFlipUtil;
+import frc.robot.util.field.FieldConstants;
+import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -68,7 +76,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  * subsystems, commands, and button mappings) should be declared here.
  */
 public class RobotContainer {
-  PositionTracker positionTracker = new PositionTracker();
   TargetingSystem target = new TargetingSystem();
 
   // Subsystems
@@ -135,9 +142,10 @@ public class RobotContainer {
             new Vision(
                 drive,
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
-                new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation));
-        elevator = new Elevator(new ElevatorIOTalonFX(), positionTracker);
-        arm = new Arm(new ArmIOTalonFX(), positionTracker);
+                new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation),
+                new VisionIOQuestNav(VisionConstants.questName));
+        elevator = new Elevator(new ElevatorIOTalonFX(), false);
+        arm = new Arm(new ArmIOTalonFX(), false, () -> elevator.getCarriageComponentPose());
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
@@ -160,8 +168,8 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
-        elevator = new Elevator(new ElevatorIOTalonFXSim(elevatorLigament), positionTracker);
-        arm = new Arm(new ArmIOTalonFXSim(armLigament), positionTracker);
+        elevator = new Elevator(new ElevatorIOSim(elevatorLigament), true);
+        arm = new Arm(new ArmIOSim(armLigament), true, () -> elevator.getCarriageComponentPose());
         break;
 
       default:
@@ -175,13 +183,21 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
-        elevator = new Elevator(new ElevatorIO() {}, positionTracker);
-        arm = new Arm(new ArmIO() {}, positionTracker);
+        elevator = new Elevator(new ElevatorIO() {}, true);
+        arm = new Arm(new ArmIO() {}, true, () -> elevator.getCarriageComponentPose());
         break;
     }
 
+    // QuestNav initialization
+    // vision.
+
     // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    autoChooser =
+        new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser("Right 3 L4"));
+
+    for (String auto : AutoBuilder.getAllAutoNames()) {
+      autoChooser.addOption(auto.replace("Right", "Left"), new PathPlannerAuto(auto, true));
+    }
 
     // Set up SysId routines
     autoChooser.addOption(
@@ -228,7 +244,7 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
 
-    // Reset gyro to 0° when B button is pressed
+    // Reset gyro to 0° when start button is pressed
     final Runnable resetGyro =
         Constants.currentMode == Constants.Mode.SIM
             ? () ->
@@ -239,27 +255,97 @@ public class RobotContainer {
             : () ->
                 drive.setPose(
                     new Pose2d(drive.getPose().getTranslation(), new Rotation2d())); // zero gyro
-    drv.start().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
+    drv.start().onTrue(runOnce(resetGyro, drive).ignoringDisable(true));
 
     // Turtle Mode toggle
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
 
-    op.y().onTrue(target.setTargetLevel(ReefBranchLevel.L4));
-    op.x().onTrue(target.setTargetLevel(ReefBranchLevel.L3));
-    op.b().onTrue(target.setTargetLevel(ReefBranchLevel.L2));
-    op.a().onTrue(target.setTargetLevel(ReefBranchLevel.L1));
+    // Score Coral
+    // drv.rightBumper().onTrue(score());
+
+    // While Left Trigger is held drive robot relative approach left branch
+    drv.leftTrigger()
+        .whileTrue(
+            DriveCommands.joystickApproach(
+                drive,
+                () -> -drv.getLeftY(),
+                () -> getNearestReefBranch(drive.getPose(), Side.Left)));
+
+    // While Right Trigger is held drive robot relative approach right branch
+    drv.rightTrigger()
+        .whileTrue(
+            DriveCommands.joystickApproach(
+                drive,
+                () -> -drv.getLeftY(),
+                () -> getNearestReefBranch(drive.getPose(), Side.Right)));
+
+    op.y().onTrue(target.setTargetLevel(ElevatorState.LEVEL_4));
+    op.x().onTrue(target.setTargetLevel(ElevatorState.LEVEL_3));
+    op.b().onTrue(target.setTargetLevel(ElevatorState.LEVEL_2));
+    op.a().onTrue(target.setTargetLevel(ElevatorState.LEVEL_1));
 
     op.leftBumper().onTrue(target.moveTargetBranchLeft());
     op.rightBumper().onTrue(target.moveTargetBranchRight());
 
     op.start()
         .onTrue(
-            elevator
-                .runHeight(target.getTargetBranchHeightMeters())
-                .alongWith(arm.runAngle(target.getTargetBranchCoralArmAngle())));
+            parallel(
+                elevator.setStateCommand(target.getElevatorState()),
+                waitUntil(() -> elevator.atPosition(0.1))
+                    .andThen(arm.setStateCommand(target.getArmState()))));
 
-    // Trigger speedPick = new Trigger(() -> drive.maxSpeedPercentage != speedChooser.get());
-    // speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));
+    op.povUp()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_4)));
+    op.povLeft()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_3)));
+    op.povRight()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_2)));
+    op.povDown()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_1)));
+
+    Trigger speedPick =
+        new Trigger(
+            () -> {
+              Double chosenSpeed = speedChooser.get();
+              // If chosenSpeed is null, we consider the condition to be false
+              if (chosenSpeed == null) {
+                return false;
+              }
+              return drive.maxSpeedPercentage != chosenSpeed;
+            });
+    speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));
+  }
+
+  private static Pose2d getNearestReefFace(Pose2d currentPose) {
+    return currentPose.nearest(List.of(FieldConstants.Reef.centerFaces));
+  }
+
+  public enum Side {
+    Left,
+    Right
+  }
+
+  private static Pose2d getNearestReefBranch(Pose2d currentPose, Side side) {
+    return AllianceFlipUtil.apply(
+        FieldConstants.Reef.branchPositions
+            .get(
+                List.of(FieldConstants.Reef.centerFaces).indexOf(getNearestReefFace(currentPose))
+                        * 2
+                    + (side == Side.Left ? 1 : 0))
+            .get(FieldConstants.ReefHeight.L1)
+            .toPose2d());
   }
 
   /**
@@ -268,6 +354,12 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    var autoName = autoChooser.toString();
+    if (autoName.contains("Left")) {
+        vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 5.156, new Rotation2d(Math.PI))));
+    } else if (autoName.contains("Right")) {
+        vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 2.896, new Rotation2d(Math.PI))));
+    }
     return autoChooser.get();
   }
 

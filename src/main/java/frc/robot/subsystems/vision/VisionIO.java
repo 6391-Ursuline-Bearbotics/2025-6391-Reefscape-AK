@@ -13,6 +13,7 @@
 
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.littletonrobotics.junction.AutoLog;
@@ -42,8 +43,11 @@ public interface VisionIO {
   enum PoseObservationType {
     MEGATAG_1,
     MEGATAG_2,
-    PHOTONVISION
+    PHOTONVISION,
+    QUEST
   }
 
   default void updateInputs(VisionIOInputs inputs) {}
+
+  default void zeroQuest(Pose2d startingPose) {}
 }

@@ -1,57 +1,46 @@
-package frc.robot.subsystems.arm;
+package frc.robot.subsystems.Arm;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.util.PositionTracker;
-import java.util.function.DoubleSupplier;
+import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiledSubsystem;
+import frc.robot.util.TargetingSystem.ArmState;
+import frc.robot.util.Util;
+import java.util.function.Supplier;
+import lombok.Getter;
+import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
 
-public class Arm extends SubsystemBase {
-  private final ArmIO io;
-  private final ArmIOInputsAutoLogged inputs = new ArmIOInputsAutoLogged();
-  private final PositionTracker positionTracker;
+@Setter
+@Getter
+public class Arm extends GenericMotionProfiledSubsystem<ArmState> {
 
-  public Arm(ArmIO io, PositionTracker positionTracker) {
-    this.io = io;
-    this.positionTracker = positionTracker;
+  @Getter @Setter private ArmState state = ArmState.HOME;
 
-    positionTracker.setArmAngleSupplier(this::getPosition);
+  private final boolean debug = true;
+  private Supplier<Pose3d> carriagePoseSupplier;
+
+  public Arm(ArmIO io, boolean isSim, Supplier<Pose3d> carriagePoseSupplier) {
+    super(ProfileType.MM_POSITION, ArmConstants.kSubSysConstants, io, isSim);
+    this.carriagePoseSupplier = carriagePoseSupplier;
   }
 
-  @Override
-  public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Arm", inputs);
+  /** Constructor */
+  public Command setStateCommand(ArmState state) {
+    return startEnd(() -> this.state = state, () -> this.state = ArmState.HOME);
   }
 
-  public Command runPercent(double percent) {
-    return runEnd(() -> io.setVoltage(percent * 12.0), () -> io.setVoltage(0.0));
-  }
-
-  public Command runTeleop(DoubleSupplier up, DoubleSupplier down) {
-    return runEnd(
-        () -> io.setVoltage((up.getAsDouble() - down.getAsDouble()) * 12.0),
-        () -> io.setVoltage(0.0));
-  }
-
-  public Command runAngle(double angle) {
-    return runOnce(() -> io.setAngle(angle));
-  }
-
-  public double getPosition() {
-    return inputs.positionRad;
+  public boolean atPosition(double tolerance) {
+    return Util.epsilonEquals(io.getPosition(), state.output, Math.max(0.0001, tolerance));
   }
 
   @AutoLogOutput(key = "Mech2D/ArmComponentPose")
   public Pose3d getArmComponentPose() {
-    return positionTracker
-        .getCarriagePose()
+    return carriagePoseSupplier
+        .get()
         .plus(new Transform3d(0.083, 0, 0, new Rotation3d()))
-        .plus(new Transform3d(0, 0, 0, new Rotation3d(0, -getPosition(), 0)));
+        .plus(new Transform3d(0, 0, 0, new Rotation3d(0, -io.getPosition(), 0)));
   }
 
   @AutoLogOutput(key = "Mech2D/ClawComponentPose")
