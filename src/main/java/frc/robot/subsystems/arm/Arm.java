@@ -27,8 +27,8 @@ public class Arm extends GenericMotionProfiledSubsystem<ArmState> {
   }
 
   /** Constructor */
-  public Command setStateCommand(Supplier<ArmState> state) {
-    return startEnd(() -> this.state = state.get(), () -> this.state = ArmState.HOME);
+  public Command setStateCommand(ArmState state) {
+    return startEnd(() -> this.state = state, () -> this.state = ArmState.HOME);
   }
 
   public boolean atPosition(double tolerance) {

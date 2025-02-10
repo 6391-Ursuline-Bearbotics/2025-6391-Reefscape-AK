@@ -59,7 +59,11 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOQuestNav;
 import frc.robot.util.TargetingSystem;
+import frc.robot.util.TargetingSystem.ArmState;
 import frc.robot.util.TargetingSystem.ElevatorState;
+import frc.robot.util.field.AllianceFlipUtil;
+import frc.robot.util.field.FieldConstants;
+import java.util.List;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.littletonrobotics.junction.Logger;
@@ -256,11 +260,24 @@ public class RobotContainer {
     // Turtle Mode toggle
     drv.leftBumper().onTrue(drive.toggleTurtleMode());
 
-    // While Right Bumper is held drive robot relative
-    drv.rightBumper()
+    // Score Coral
+    // drv.rightBumper().onTrue(score());
+
+    // While Left Trigger is held drive robot relative approach left branch
+    drv.leftTrigger()
         .whileTrue(
-            DriveCommands.joystickRobotDrive(
-                drive, () -> -drv.getLeftY(), () -> -drv.getLeftX(), () -> -drv.getRightX()));
+            DriveCommands.joystickApproach(
+                drive,
+                () -> -drv.getLeftY(),
+                () -> getNearestReefBranch(drive.getPose(), Side.Left)));
+
+    // While Right Trigger is held drive robot relative approach right branch
+    drv.rightTrigger()
+        .whileTrue(
+            DriveCommands.joystickApproach(
+                drive,
+                () -> -drv.getLeftY(),
+                () -> getNearestReefBranch(drive.getPose(), Side.Right)));
 
     op.y().onTrue(target.setTargetLevel(ElevatorState.LEVEL_4));
     op.x().onTrue(target.setTargetLevel(ElevatorState.LEVEL_3));
@@ -273,9 +290,30 @@ public class RobotContainer {
     op.start()
         .onTrue(
             parallel(
-                elevator.setStateCommand(() -> target.getElevatorState()),
+                elevator.setStateCommand(target.getElevatorState()),
                 waitUntil(() -> elevator.atPosition(0.1))
-                    .andThen(arm.setStateCommand(() -> target.getArmState()))));
+                    .andThen(arm.setStateCommand(target.getArmState()))));
+
+    op.povUp()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_4)));
+    op.povLeft()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_3)));
+    op.povRight()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_2)));
+    op.povDown()
+        .onTrue(
+            parallel(
+                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                arm.setStateCommand(ArmState.LEVEL_1)));
 
     Trigger speedPick =
         new Trigger(
@@ -290,12 +328,38 @@ public class RobotContainer {
     speedPick.onTrue(runOnce(() -> drive.setMaxSpeed(speedChooser.get())));
   }
 
+  private static Pose2d getNearestReefFace(Pose2d currentPose) {
+    return currentPose.nearest(List.of(FieldConstants.Reef.centerFaces));
+  }
+
+  public enum Side {
+    Left,
+    Right
+  }
+
+  private static Pose2d getNearestReefBranch(Pose2d currentPose, Side side) {
+    return AllianceFlipUtil.apply(
+        FieldConstants.Reef.branchPositions
+            .get(
+                List.of(FieldConstants.Reef.centerFaces).indexOf(getNearestReefFace(currentPose))
+                        * 2
+                    + (side == Side.Left ? 1 : 0))
+            .get(FieldConstants.ReefHeight.L1)
+            .toPose2d());
+  }
+
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
    *
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
+    var autoName = autoChooser.toString();
+    if (autoName.contains("Left")) {
+        vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 5.156, new Rotation2d(Math.PI))));
+    } else if (autoName.contains("Right")) {
+        vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 2.896, new Rotation2d(Math.PI))));
+    }
     return autoChooser.get();
   }
 

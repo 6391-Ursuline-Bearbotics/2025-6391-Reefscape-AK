@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.GenericMotionProfiledSubsystem.GenericMotionProfiledSubsystem;
 import frc.robot.util.TargetingSystem.ElevatorState;
 import frc.robot.util.Util;
-import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -31,8 +30,8 @@ public class Elevator extends GenericMotionProfiledSubsystem<ElevatorState> {
     super(ProfileType.MM_POSITION, ElevatorConstants.kSubSysConstants, io, isSim);
   }
 
-  public Command setStateCommand(Supplier<ElevatorState> state) {
-    return startEnd(() -> this.state = state.get(), () -> this.state = ElevatorState.HOME);
+  public Command setStateCommand(ElevatorState state) {
+    return startEnd(() -> this.state = state, () -> this.state = ElevatorState.HOME);
   }
 
   private Debouncer homedDebouncer = new Debouncer(.25, DebounceType.kRising);

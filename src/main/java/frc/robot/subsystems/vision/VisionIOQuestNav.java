@@ -68,6 +68,8 @@ public class VisionIOQuestNav implements VisionIO {
               0.0, // Average tag distance
               PoseObservationType.QUEST)
         }; // Observation type
+
+    cleanUpQuestNavMessages();
   }
 
   /**
@@ -134,8 +136,9 @@ public class VisionIOQuestNav implements VisionIO {
    *
    * @param newPose new robot pose
    */
-  public void resetPose(Pose2d newPose) {
-    resetPoseOculus = getUncorrectedOculusPose();
+  @Override
+  public void zeroQuest(Pose2d newPose) {
+    resetPoseOculus = getUncorrectedOculusPose().transformBy(robotToQuest.inverse());
     resetPoseRobot = newPose;
   }
 
