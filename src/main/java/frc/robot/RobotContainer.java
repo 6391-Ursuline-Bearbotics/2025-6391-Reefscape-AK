@@ -13,9 +13,7 @@
 
 package frc.robot;
 
-import static edu.wpi.first.wpilibj2.command.Commands.parallel;
 import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
-import static edu.wpi.first.wpilibj2.command.Commands.waitUntil;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -37,14 +35,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.subsystems.Arm.Arm;
-import frc.robot.subsystems.Arm.ArmIO;
-import frc.robot.subsystems.Arm.ArmIOSim;
-import frc.robot.subsystems.Arm.ArmIOTalonFX;
-import frc.robot.subsystems.Elevator.Elevator;
-import frc.robot.subsystems.Elevator.ElevatorIO;
-import frc.robot.subsystems.Elevator.ElevatorIOSim;
-import frc.robot.subsystems.Elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
@@ -59,7 +49,6 @@ import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.subsystems.vision.VisionIOQuestNav;
 import frc.robot.util.TargetingSystem;
-import frc.robot.util.TargetingSystem.ArmState;
 import frc.robot.util.TargetingSystem.ElevatorState;
 import frc.robot.util.field.AllianceFlipUtil;
 import frc.robot.util.field.FieldConstants;
@@ -81,8 +70,8 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
-  private final Elevator elevator;
-  private final Arm arm;
+  // private final Elevator elevator;
+  // private final Arm arm;
 
   private SwerveDriveSimulation driveSimulation = null;
 
@@ -94,7 +83,7 @@ public class RobotContainer {
   private final LoggedDashboardChooser<Command> autoChooser;
   private final LoggedDashboardChooser<Double> speedChooser =
       new LoggedDashboardChooser<>("Swerve Speed");
-  ;
+
   // private final LoggedDashboardChooser<ScoreLevel> reefHeight;
   // private final LoggedDashboardChooser<ReefFace> reefFace;
   // private final LoggedDashboardChooser<ReefPipe> reefPipe;
@@ -144,8 +133,8 @@ public class RobotContainer {
                 new VisionIOLimelight(VisionConstants.camera0Name, drive::getRotation),
                 new VisionIOLimelight(VisionConstants.camera1Name, drive::getRotation),
                 new VisionIOQuestNav(VisionConstants.questName));
-        elevator = new Elevator(new ElevatorIOTalonFX(), false);
-        arm = new Arm(new ArmIOTalonFX(), false, () -> elevator.getCarriageComponentPose());
+        // elevator = new Elevator(new ElevatorIOTalonFX(), false);
+        // arm = new Arm(new ArmIOTalonFX(), false, () -> elevator.getCarriageComponentPose());
         break;
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
@@ -168,8 +157,9 @@ public class RobotContainer {
                     camera0Name, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose),
                 new VisionIOPhotonVisionSim(
                     camera1Name, robotToCamera1, driveSimulation::getSimulatedDriveTrainPose));
-        elevator = new Elevator(new ElevatorIOSim(elevatorLigament), true);
-        arm = new Arm(new ArmIOSim(armLigament), true, () -> elevator.getCarriageComponentPose());
+        // elevator = new Elevator(new ElevatorIOSim(elevatorLigament), true);
+        // arm = new Arm(new ArmIOSim(armLigament), true, () ->
+        // elevator.getCarriageComponentPose());
         break;
 
       default:
@@ -183,8 +173,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
-        elevator = new Elevator(new ElevatorIO() {}, true);
-        arm = new Arm(new ArmIO() {}, true, () -> elevator.getCarriageComponentPose());
+        // elevator = new Elevator(new ElevatorIO() {}, true);
+        // arm = new Arm(new ArmIO() {}, true, () -> elevator.getCarriageComponentPose());
         break;
     }
 
@@ -287,7 +277,7 @@ public class RobotContainer {
     op.leftBumper().onTrue(target.moveTargetBranchLeft());
     op.rightBumper().onTrue(target.moveTargetBranchRight());
 
-    op.start()
+    /* op.start()
         .onTrue(
             parallel(
                 elevator.setStateCommand(target.getElevatorState()),
@@ -313,7 +303,7 @@ public class RobotContainer {
         .onTrue(
             parallel(
                 elevator.setStateCommand(ElevatorState.LEVEL_4),
-                arm.setStateCommand(ArmState.LEVEL_1)));
+                arm.setStateCommand(ArmState.LEVEL_1))); */
 
     Trigger speedPick =
         new Trigger(
@@ -354,12 +344,12 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    var autoName = autoChooser.toString();
+    /* var autoName = autoChooser.toString();
     if (autoName.contains("Left")) {
         vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 5.156, new Rotation2d(Math.PI))));
     } else if (autoName.contains("Right")) {
         vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 2.896, new Rotation2d(Math.PI))));
-    }
+    } */
     return autoChooser.get();
   }
 
