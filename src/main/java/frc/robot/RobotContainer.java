@@ -302,17 +302,17 @@ public class RobotContainer {
     op.povLeft()
         .onTrue(
             parallel(
-                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                elevator.setStateCommand(ElevatorState.LEVEL_3),
                 arm.setStateCommand(ArmState.LEVEL_3)));
     op.povRight()
         .onTrue(
             parallel(
-                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                elevator.setStateCommand(ElevatorState.LEVEL_2),
                 arm.setStateCommand(ArmState.LEVEL_2)));
     op.povDown()
         .onTrue(
             parallel(
-                elevator.setStateCommand(ElevatorState.LEVEL_4),
+                elevator.setStateCommand(ElevatorState.LEVEL_1),
                 arm.setStateCommand(ArmState.LEVEL_1)));
 
     Trigger speedPick =
@@ -356,9 +356,9 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     var autoName = autoChooser.toString();
     if (autoName.contains("Left")) {
-        vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 5.156, new Rotation2d(Math.PI))));
+      vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 5.156, new Rotation2d(Math.PI))));
     } else if (autoName.contains("Right")) {
-        vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 2.896, new Rotation2d(Math.PI))));
+      vision.zeroQuest(AllianceFlipUtil.apply(new Pose2d(7.092, 2.896, new Rotation2d(Math.PI))));
     }
     return autoChooser.get();
   }
